@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="minimum-scale=1.0, width=device-width, maximum-scale=1.0, user-scalable=no, initial-scale=1" />
+	<title>jQuery Mobile Range Slider test</title>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css" />
+	<style>
+		/*\
+			Range slider;
+		\*/
+		.ui-range
+		{
+			display: inline;
+		}
+		.ui-range .ui-range-slider
+		{
+			clear: both;
+			margin: 0;
+			position: relative;
+		}
+		.ui-range .ui-range-slider div.ui-slider
+		{
+			margin: 10px 0;
+			top: -10px;
+			left: 1%;
+			width: 99.5%;
+		}
+		.ui-range .ui-range-slider div.ui-slider:first-child
+		{
+			top: 11px; /* 12px when background is not hidden; */
+			width: 97.5%;
+		}
+		.ui-range .ui-range-slider div.ui-slider:last-child
+		{
+			position: absolute;
+		}
+		.ui-range .ui-range-slider .ui-slider-bg
+		{
+			position: relative;
+		}
+
+		@media all and (min-width: 880px)
+		{
+			.ui-range:not(.ui-range-full) .ui-range-slider
+			{
+				margin: 0 0 0 20px;
+			}
+			.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider
+			{
+				left: 0%;
+				width: 99.5%;
+			}
+			.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider:first-child
+			{
+				width: 43%;
+			}
+			.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider:last-child
+			{
+			}
+		}
+	</style>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+	<script type="text/javascript" src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+	<script type="text/javascript">
+		(function index() {
+
+			"use strict";
+
+			/*\
+			Fix visual steps for slider;
+			\*/
+			var $_mobile_slider_prototype_refresh = $.mobile.slider.prototype.refresh;
+			$.mobile.slider.prototype.refresh = function (val) {
+
+				var control = this.element, percent,
+					cType = control[0].nodeName.toLowerCase(),
+					min = cType === "input" ? parseFloat(control.attr("min")) : 0,
+					max = cType === "input" ? parseFloat(control.attr("max")) : control.find("option").length - 1,
+					step = (cType === "input" && parseFloat(control.attr("step")) > 0) ? parseFloat(control.attr("step")) : 1;
+
+				if (typeof val === "object") {
+					var data = val,
+						tol = 8;  // a slight tolerance helped get to the ends of the slider
+					if (!this.dragging ||
+							data.pageX < this.slider.offset().left - tol ||
+							data.pageX > this.slider.offset().left + this.slider.width() + tol) {
+						$_mobile_slider_prototype_refresh.apply(this, arguments);
+						return;
+					}
+					percent = Math.round(((data.pageX - this.slider.offset().left) / this.slider.width()) * 100);
+				} else {
+					// execute original code;
+					$_mobile_slider_prototype_refresh.apply(this, arguments);
+					return;
+				}
+
+				if (isNaN(percent)) {
+					// execute original code;
+					$_mobile_slider_prototype_refresh.apply(this, arguments);
+					return;
+				}
+
+				if (percent < 0) {
+					percent = 0;
+				}
+
+				if (percent > 100) {
+					percent = 100;
+				}
+
+				var newval = (percent / 100) * (max - min) + min;
+
+				var valModStep = (newval - min) % step;
+				var alignValue = newval - valModStep;
+
+				if (Math.abs(valModStep) * 2 >= step) {
+					alignValue += (valModStep > 0) ? step : (-step);
+				}
+
+				$_mobile_slider_prototype_refresh.call(this, alignValue);
+			};
+
+
+
+			/*\
+			Range slider
+			\*/
+			$.widget("mobile.rangeslider", $.mobile.widget, {
+				options: {
+					initSelector: ":jqmData(role='rangeslider')"
+				},
+
+				_create: function () {
+					var span = $("<span/>").addClass("ui-range-slider");
+					this.element.addClass("ui-range").append(span).find(".ui-slider").appendTo(span);
+
+					var inputs = this.element.find("input[type=number]"),
+						minRange = inputs.first(),
+						maxRange = inputs.last(),
+						minData = minRange.data("slider"),
+						maxData = maxRange.data("slider"),
+						rangeMin = parseFloat(maxRange.attr("min")),
+						rangeMax = parseFloat(maxRange.attr("max")),
+						rangeDiff = rangeMax - rangeMin;
+
+					// hide min range highlight background;
+					minData.valuebg.hide();
+
+					// remove min range slider background;
+					minData.slider.removeClass("ui-btn-down-" + (minData.options.trackTheme || $.mobile.getInheritedTheme(minRange, "c")));
+
+					minRange.change(function () {
+						var that = $(this),
+							min = parseInt(that.val()),
+							max = parseInt(maxRange.val());
+						if (min > max) {
+							that.val(max).slider("refresh");
+							maxRange.val(min).slider("refresh");
+						}
+
+						if (maxData.valuebg) {
+							var minPercent = (min - rangeMin) / rangeDiff * 100,
+								maxPercent = (max - rangeMin) / rangeDiff * 100;
+							maxData.valuebg.css({
+								left: minPercent + "%",
+								width: maxPercent - minPercent + "%"
+							});
+						}
+					});
+
+					maxRange.change(function () {
+						var that = $(this),
+							min = parseInt(minRange.val()),
+							max = parseInt(that.val());
+						if (min > max) {
+							that.val(min).slider("refresh");
+							minRange.val(max).slider("refresh");
+						}
+
+						if (maxData.valuebg) {
+							var minPercent = (min - rangeMin) / rangeDiff * 100,
+								maxPercent = (max - rangeMin) / rangeDiff * 100;
+							maxData.valuebg.css({
+								left: minPercent + "%",
+								width: maxPercent - minPercent + "%"
+							});
+						}
+					});
+
+					// if slider has highlight, execute on page show to set the correct size;
+					if (maxData.valuebg) {
+						$(document).bind("pagebeforeshow", function (e) {
+							maxRange.slider("refresh");
+						});
+					}
+				}
+			});
+
+			$(document).on("pagecreate create", function (e) {
+				$.mobile.rangeslider.prototype.enhanceWithin(e.target, true);
+			});
+
+		})();
+	</script>
+</head>
+<body>
+	<div data-role="page" data-title="test" id="testPage">
+		<div data-role="header">
+			<h3>
+				jQuery Mobile Range Slider tests
+			</h3>
+		</div>
+		<div data-role="content">
+			<ul data-role="listview">
+				<li>
+					<a href="#testPage1">Test 1: default</a>
+				</li>
+				<li>
+					<a href="#testPage2">Test 2: in dialog</a>
+				</li>
+				<li>
+					<a href="#testPage3">Test 3: in listview</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<div data-role="page" data-title="jQuery Mobile Range Slider test 1" data-add-back-btn="true" id="testPage1">
+		<div data-role="header">
+			<h3>
+				jQuery Mobile Range Slider test 1
+			</h3>
+		</div>
+		<div data-role="content">
+			<label for="rent-price-min-range-slider">
+				Outside of anything:
+			</label>
+			<div data-role="rangeslider">
+				<span class="prefix valuta">&euro;&nbsp;</span><input name="rent-price-min-range-slider" value="100" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
+				<span class="prefix valuta">&euro;&nbsp;</span><input name="rent-price-max-range-slider" value="250" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
+			</div>
+		</div>
+	</div>
+	<div data-role="page" data-title="jQuery Mobile Range Slider test 2" data-add-back-btn="true" id="testPage2">
+		<div data-role="header">
+			<h3>
+				jQuery Mobile Range Slider test 2
+			</h3>
+		</div>
+		<div data-role="content">
+			<a href="#popupPhotoLandscape" data-role="button" data-rel="popup" data-position-to="window">Open dialog</a>
+			<div data-role="popup" id="popupPhotoLandscape" data-overlay-theme="a" data-corners="false" data-tolerance="30,15">
+				<a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+				<h3>
+					In dialog
+				</h3>
+				<div style="padding: 10px 20px;">
+					<div data-role="rangeslider" class="ui-range-full">
+						<span class="prefix valuta">Minimum: &euro;&nbsp;</span><input name="rent-price-min-range-slider" value="100" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
+						<br />
+						<span class="prefix valuta">Maximum: &euro;&nbsp;</span><input name="rent-price-max-range-slider" value="250" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
+					</div>
+					<br />
+					<br />
+					<a href="#" data-role="button" data-inline="true" data-rel="back" data-theme="c">Cancel</a> <a href="#" data-role="button" data-inline="true" data-rel="back" data-transition="flow" data-theme="b">Save</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div data-role="page" data-title="jQuery Mobile Range Slider test 3" data-add-back-btn="true" id="testPage3">
+		<div data-role="header">
+			<h3>
+				jQuery Mobile Range Slider test 3
+			</h3>
+		</div>
+		<div data-role="content">
+			<ul data-role="listview">
+				<li>
+					A list item
+				</li>
+				<li>
+					<label for="rent-price-min-range-slider">
+						In listview:
+					</label>
+					<div data-role="rangeslider">
+						<span class="prefix valuta">&euro;&nbsp;</span><input name="rent-price-min-range-slider" value="100" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
+						<span class="prefix valuta">&euro;&nbsp;</span><input name="rent-price-max-range-slider" value="250" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
+					</div>
+				</li>
+				<li>
+					Another list item
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>
