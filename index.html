@@ -13,31 +13,51 @@
 		{
 			display: inline;
 		}
-		.ui-range .ui-range-slider
+
+			.ui-range .ui-range-slider
+			{
+				clear: both;
+				margin: 0;
+				position: relative;
+			}
+
+				.ui-range .ui-range-slider div.ui-slider
+				{
+					margin: 10px 0;
+					top: -10px;
+					left: 1%;
+					width: 99.5%;
+				}
+
+					.ui-range .ui-range-slider div.ui-slider:first-child
+					{
+						top: 11px; /* 12px when background is not hidden; */
+						width: 97.5%;
+					}
+
+					.ui-range .ui-range-slider div.ui-slider:last-child
+					{
+						position: absolute;
+					}
+
+				.ui-range .ui-range-slider .ui-slider-bg
+				{
+					position: relative;
+				}
+
+		/* revert the margin:0; set by jQm; */
+		.ui-field-contain .ui-range input.ui-slider-input
 		{
-			clear: both;
-			margin: 0;
-			position: relative;
+			margin: 1px;
 		}
-		.ui-range .ui-range-slider div.ui-slider
+
+		/* on small screen make the blocks full width; */
+		@media all and (max-width: 400px)
 		{
-			margin: 10px 0;
-			top: -10px;
-			left: 1%;
-			width: 99.5%;
-		}
-		.ui-range .ui-range-slider div.ui-slider:first-child
-		{
-			top: 11px; /* 12px when background is not hidden; */
-			width: 97.5%;
-		}
-		.ui-range .ui-range-slider div.ui-slider:last-child
-		{
-			position: absolute;
-		}
-		.ui-range .ui-range-slider .ui-slider-bg
-		{
-			position: relative;
+			.ui-range .ui-grid-a .ui-block-a, .ui-range .ui-grid-a .ui-block-b
+			{
+				width: 100%;
+			}
 		}
 
 		@media all and (min-width: 880px)
@@ -46,18 +66,21 @@
 			{
 				margin: 0 0 0 20px;
 			}
-			.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider
-			{
-				left: 0%;
-				width: 99.5%;
-			}
-			.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider:first-child
-			{
-				width: 43%;
-			}
-			.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider:last-child
-			{
-			}
+
+				.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider
+				{
+					left: 0%;
+					width: 99.5%;
+				}
+
+					.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider:first-child
+					{
+						width: 43%;
+					}
+
+					.ui-range:not(.ui-range-full) .ui-range-slider div.ui-slider:last-child
+					{
+					}
 		}
 	</style>
 	<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
@@ -145,15 +168,15 @@
 						rangeDiff = rangeMax - rangeMin;
 
 					// hide min range highlight background;
-					minData.valuebg.hide();
+					minData.valuebg && minData.valuebg.hide();
 
 					// remove min range slider background;
 					minData.slider.removeClass("ui-btn-down-" + (minData.options.trackTheme || $.mobile.getInheritedTheme(minRange, "c")));
 
 					minRange.change(function () {
 						var that = $(this),
-							min = parseInt(that.val()),
-							max = parseInt(maxRange.val());
+							min = parseInt(that.val(), 10),
+							max = parseInt(maxRange.val(), 10);
 						if (min > max) {
 							that.val(max).slider("refresh");
 							maxRange.val(min).slider("refresh");
@@ -171,8 +194,8 @@
 
 					maxRange.change(function () {
 						var that = $(this),
-							min = parseInt(minRange.val()),
-							max = parseInt(that.val());
+							min = parseInt(minRange.val(), 10),
+							max = parseInt(that.val(), 10);
 						if (min > max) {
 							that.val(min).slider("refresh");
 							minRange.val(max).slider("refresh");
@@ -223,6 +246,13 @@
 					<a href="#testPage3">Test 3: in listview</a>
 				</li>
 			</ul>
+			<br />
+			<p>
+				View <a href="https://github.com/jerone/jQueryMobileRangeSlider">source on Github</a>.
+			</p>
+			<p>
+				View <a href="http://jerone.github.com/jQueryMobileRangeSlider/">demo page</a>.
+			</p>
 		</div>
 	</div>
 	<div data-role="page" data-title="jQuery Mobile Range Slider test 1" data-add-back-btn="true" id="testPage1">
@@ -248,22 +278,36 @@
 			</h3>
 		</div>
 		<div data-role="content">
-			<a href="#popupPhotoLandscape" data-role="button" data-rel="popup" data-position-to="window">Open dialog</a>
-			<div data-role="popup" id="popupPhotoLandscape" data-overlay-theme="a" data-corners="false" data-tolerance="30,15">
-				<a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+			<a href="#buy-price-popup" data-role="button" data-rel="popup" data-position-to="window">Open dialog</a>
+			<div data-role="popup" id="buy-price-popup" data-overlay-theme="a" data-corners="false">
+				<a href="#" data-role="button" data-rel="back" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
 				<h3>
-					In dialog
+					In popup
 				</h3>
-				<div style="padding: 10px 20px;">
-					<div data-role="rangeslider" class="ui-range-full">
-						<span class="prefix valuta">Minimum: &euro;&nbsp;</span><input name="rent-price-min-range-slider" value="100" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
-						<br />
-						<span class="prefix valuta">Maximum: &euro;&nbsp;</span><input name="rent-price-max-range-slider" value="250" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
-					</div>
-					<br />
-					<br />
-					<a href="#" data-role="button" data-inline="true" data-rel="back" data-theme="c">Cancel</a> <a href="#" data-role="button" data-inline="true" data-rel="back" data-transition="flow" data-theme="b">Save</a>
-				</div>
+				<ul data-role="listview">
+					<li data-role="fieldcontain">
+						<div data-role="rangeslider" class="ui-range-full">
+							<div class="ui-grid-a">
+								<div class="ui-block-a">
+									<span>Minimum:</span><span class="ui-controlgroup-controls"><input name="buy-price-min-range-slider" class="buy-price-min-range-slider" value="0" min="0" max="2000000" step="50000" data-highlight="true" type="range" style="width: 85px; display: inline;" /></span>
+								</div>
+								<div class="ui-block-b">
+									<span>Maximum:</span><span class="ui-controlgroup-controls"><input name="buy-price-max-range-slider" class="buy-price-max-range-slider" value="2000000" min="0" max="2000000" step="50000" data-highlight="true" type="range" style="width: 85px; display: inline;" /></span>
+								</div>
+							</div>
+						</div>
+					</li>
+					<li data-role="fieldcontain">
+						<div class="ui-grid-a">
+							<div class="ui-block-a">
+								<a href="#" data-role="button" data-rel="back" data-theme="c">Cancel</a>
+							</div>
+							<div class="ui-block-b">
+								<a href="#" data-role="button" data-rel="back" data-theme="b" data-transition="flow" class="save-button">Save</a>
+							</div>
+						</div>
+					</li>
+				</ul>
 			</div>
 		</div>
 	</div>
@@ -275,9 +319,7 @@
 		</div>
 		<div data-role="content">
 			<ul data-role="listview">
-				<li>
-					A list item
-				</li>
+				<li>A list item</li>
 				<li>
 					<label for="rent-price-min-range-slider">
 						In listview:
@@ -287,9 +329,7 @@
 						<span class="prefix valuta">&euro;&nbsp;</span><input name="rent-price-max-range-slider" value="250" min="30" max="500" step="10" data-highlight="true" type="range" style="width: 85px;" />
 					</div>
 				</li>
-				<li>
-					Another list item
-				</li>
+				<li>Another list item</li>
 			</ul>
 		</div>
 	</div>
